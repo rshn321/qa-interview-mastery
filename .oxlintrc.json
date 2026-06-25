@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "plugins": ["unicorn", "oxc"],
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
+  "globals": {
+    "QA_DATA": "writable"
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "eqeqeq": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "unicorn/consistent-function-scoping": "off"
+  },
+  "ignorePatterns": ["node_modules", "dist"]
+}

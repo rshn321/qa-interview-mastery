@@ -1,0 +1,19 @@
+{
+  "name": "qa-interview-mastery",
+  "version": "1.0.0",
+  "description": "Interactive web app to crack the Senior QA Engineer interview — built and linted with the oxc toolchain.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "serve": "npx --yes serve .",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "check": "oxlint --max-warnings 0"
+  },
+  "keywords": ["qa", "testing", "interview", "oxc", "oxlint"],
+  "license": "MIT",
+  "devDependencies": {
+    "oxlint": "^1.71.0"
+  }
+}
