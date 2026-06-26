@@ -110,7 +110,9 @@
 
   const views = { dashboard, learn, flashcards, mock, roadmap, guide, docs, glossary, types, tools,
     ddSql: () => renderGuide("sql"), ddAuto: () => renderGuide("automation"),
-    ddPlay: () => renderGuide("playwright"),
+    ddPlay: () => renderGuide("playwright"), ddSele: () => renderGuide("selenium"),
+    ddCy: () => renderGuide("cypress"), ddJenkins: () => renderGuide("jenkins"),
+    ddK8s: () => renderGuide("kubernetes"),
     ddPerf: () => renderGuide("performance"), ddCicd: () => renderGuide("cicd") };
 
   /* ---------- DASHBOARD ---------- */

@@ -363,6 +363,585 @@
         ]},
       ],
     },
+    /* ═══════════════════ SELENIUM (FULL) ═══════════════════ */
+    {
+      id: "selenium",
+      icon: "🧫",
+      title: "Selenium — The Complete Guide",
+      tagline: "WebDriver architecture, locators, the three waits, WebElement methods, Actions & JavascriptExecutor, windows/frames/alerts, Page Object Model + PageFactory, and Selenium Grid.",
+      sections: [
+        { id: "why", h: "What is Selenium & the ecosystem", blocks: [
+          { md: "**Selenium** is the long-standing open-source standard for browser automation. It drives **real browsers** via the W3C **WebDriver** protocol, and is **language-agnostic** (Java, Python, C#, JavaScript, Ruby) and **browser-agnostic** (Chrome, Firefox, Edge, Safari)." },
+          { md: "The Selenium suite:\n- **WebDriver** — the core API that controls browsers (what people mean by 'Selenium').\n- **Selenium IDE** — a record-and-playback browser extension for quick scripts.\n- **Selenium Grid** — runs tests in parallel across multiple machines and browsers." },
+          { note: "It's the most common automation skill on job descriptions and the baseline every QA is expected to know — even if the team uses Playwright/Cypress day-to-day.", t: "key" },
+        ]},
+        { id: "install", h: "Setup & project structure", blocks: [
+          { md: "A typical **Java + Maven** stack adds Selenium and a test runner (TestNG/JUnit). Modern Selenium (4.6+) ships **Selenium Manager**, which auto-downloads the right browser driver — no manual driver setup." },
+          { code: `<!-- pom.xml dependencies -->
+<dependency>
+  <groupId>org.seleniumhq.selenium</groupId>
+  <artifactId>selenium-java</artifactId>
+  <version>4.x</version>
+</dependency>
+<dependency>
+  <groupId>org.testng</groupId>
+  <artifactId>testng</artifactId>
+  <version>7.x</version>
+</dependency>` },
+          { code: `src/test/java/
+├─ tests/        # test classes
+├─ pages/        # Page Objects (POM)
+├─ base/         # BaseTest: driver setup/teardown
+└─ utils/        # waits, config, data helpers` },
+        ]},
+        { id: "architecture", h: "How WebDriver works", blocks: [
+          { md: "Your test code calls the **WebDriver client library** (in your language). It sends commands over the **W3C WebDriver protocol** (HTTP/JSON) to a **browser driver** (ChromeDriver, GeckoDriver…), which controls the actual browser and returns results back up the chain." },
+          { md: "`Test code → WebDriver client → (W3C protocol) → Browser driver → Browser`" },
+          { note: "Because each command is a round-trip, Selenium has no built-in waiting — you must synchronize explicitly, which is the #1 source of flakiness if done wrong.", t: "warn" },
+        ]},
+        { id: "firsttest", h: "Anatomy of a test", blocks: [
+          { code: `WebDriver driver = new ChromeDriver();         // Selenium Manager handles the driver
+driver.manage().window().maximize();
+driver.get("https://example.com/login");
+
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+wait.until(ExpectedConditions.elementToBeClickable(By.id("user")))
+    .sendKeys("alice");
+driver.findElement(By.id("pass")).sendKeys("secret");
+driver.findElement(By.cssSelector("button[type=submit]")).click();
+
+Assert.assertTrue(driver.getCurrentUrl().contains("/dashboard"));
+driver.quit();                                  // always quit to free the session` },
+        ]},
+        { id: "locators", h: "Locator strategies (By)", blocks: [
+          { md: "Selenium finds elements with `By` strategies. Prefer stable, readable locators over brittle absolute XPath." },
+          { md: "| Locator | Example |\n|---|---|\n| **id** | `By.id(\"username\")` *(fastest, preferred)* |\n| **name** | `By.name(\"email\")` |\n| **className** | `By.className(\"btn-primary\")` |\n| **tagName** | `By.tagName(\"input\")` |\n| **linkText** | `By.linkText(\"Sign out\")` |\n| **partialLinkText** | `By.partialLinkText(\"Sign\")` |\n| **cssSelector** | `By.cssSelector(\"form #email\")` *(fast, flexible)* |\n| **xpath** | `By.xpath(\"//button[text()='Save']\")` *(powerful, can be brittle)* |" },
+          { code: `// find one vs many
+WebElement el  = driver.findElement(By.cssSelector("[data-testid=user]"));
+List<WebElement> rows = driver.findElements(By.cssSelector("table tr"));
+
+// CSS vs XPath for the same element
+By.cssSelector("input[name='email']");
+By.xpath("//input[@name='email']");
+// XPath can traverse to parents/siblings (CSS cannot):
+By.xpath("//label[text()='Email']/following-sibling::input");` },
+          { note: "Preference order: id → cssSelector → xpath (only when you need text matching or DOM traversal). Avoid absolute XPath like /html/body/div[2]/... — it breaks on any layout change.", t: "key" },
+        ]},
+        { id: "waits", h: "The three waits (synchronization)", blocks: [
+          { md: "Synchronization is *the* Selenium interview topic. There are three wait types:" },
+          { md: "- **Implicit wait** — a global setting; the driver polls for *element presence* up to a timeout on every `findElement`. Convenient but blunt.\n- **Explicit wait** — wait for a *specific condition* on a *specific element* (`WebDriverWait` + `ExpectedConditions`). Precise — the recommended default.\n- **Fluent wait** — an explicit wait with a custom polling interval and ignored exceptions." },
+          { code: `// Implicit (global) — applies to all findElement calls
+driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+
+// Explicit (preferred) — wait for a condition
+new WebDriverWait(driver, Duration.ofSeconds(10))
+    .until(ExpectedConditions.visibilityOfElementLocated(By.id("total")));
+
+// Fluent — custom polling + ignore exceptions
+Wait<WebDriver> fluent = new FluentWait<>(driver)
+    .withTimeout(Duration.ofSeconds(15))
+    .pollingEvery(Duration.ofMillis(500))
+    .ignoring(NoSuchElementException.class);
+fluent.until(d -> d.findElement(By.id("ready")));` },
+          { note: "Never use Thread.sleep — it's a fixed delay that's either too short (flaky) or too long (slow). And don't MIX implicit + explicit waits — their timeouts can compound unpredictably. Pick explicit.", t: "warn" },
+        ]},
+        { id: "actions", h: "WebElement methods", blocks: [
+          { md: "| Method | Does |\n|---|---|\n| `.click()` | click the element |\n| `.sendKeys(\"text\")` | type into an input |\n| `.clear()` | clear an input |\n| `.getText()` | visible text |\n| `.getAttribute(\"value\")` | an attribute/property |\n| `.isDisplayed()` | is it visible |\n| `.isEnabled()` | is it enabled |\n| `.isSelected()` | checkbox/radio selected |\n| `.submit()` | submit the form |\n| `.getCssValue(\"color\")` | a computed CSS value |" },
+          { code: `WebElement email = driver.findElement(By.id("email"));
+email.clear();
+email.sendKeys("a@b.com");
+String value = email.getAttribute("value");
+boolean enabled = driver.findElement(By.id("submit")).isEnabled();` },
+        ]},
+        { id: "advanced", h: "Actions, Select & JavascriptExecutor", blocks: [
+          { md: "Beyond basic clicks, three APIs handle complex interactions:" },
+          { h: "Actions class — mouse & keyboard", blocks: [] },
+          { code: `Actions actions = new Actions(driver);
+actions.moveToElement(menu).perform();              // hover
+actions.doubleClick(el).perform();
+actions.contextClick(el).perform();                 // right-click
+actions.dragAndDrop(source, target).perform();
+actions.keyDown(Keys.CONTROL).sendKeys("a").keyUp(Keys.CONTROL).perform();` },
+          { h: "Select class — dropdowns", blocks: [] },
+          { code: `Select dropdown = new Select(driver.findElement(By.id("country")));
+dropdown.selectByVisibleText("Nepal");
+dropdown.selectByValue("NP");
+dropdown.selectByIndex(2);` },
+          { h: "JavascriptExecutor — when WebDriver can't", blocks: [] },
+          { code: `JavascriptExecutor js = (JavascriptExecutor) driver;
+js.executeScript("arguments[0].scrollIntoView(true);", element);
+js.executeScript("arguments[0].click();", hiddenButton);  // force click
+js.executeScript("return document.readyState");          // 'complete'?` },
+          { note: "Use JavascriptExecutor sparingly — a JS click bypasses real user actionability checks and can mask genuine UI bugs.", t: "warn" },
+        ]},
+        { id: "windows", h: "Windows, frames & alerts", blocks: [
+          { code: `// Switch between tabs/windows
+String main = driver.getWindowHandle();
+for (String handle : driver.getWindowHandles()) {
+  if (!handle.equals(main)) driver.switchTo().window(handle);
+}
+
+// iframes — you MUST switch in and back out
+driver.switchTo().frame("payment-iframe");
+driver.findElement(By.id("card")).sendKeys("4242...");
+driver.switchTo().defaultContent();
+
+// JavaScript alerts / confirms / prompts
+Alert alert = driver.switchTo().alert();
+alert.accept();              // or .dismiss();
+String text = alert.getText();` },
+          { note: "A common 'element not found' bug is forgetting to switchTo().frame() — elements inside an iframe are invisible to the default content.", t: "tip" },
+        ]},
+        { id: "pom", h: "Page Object Model + PageFactory", blocks: [
+          { md: "**POM** encapsulates each page as a class exposing behaviours and hiding locators. Selenium's **PageFactory** initialises `@FindBy` fields lazily." },
+          { code: `// LoginPage.java
+public class LoginPage {
+  WebDriver driver;
+  @FindBy(testId = "username") WebElement username;   // via @FindBy(css=...)
+  @FindBy(id = "pass")        WebElement password;
+  @FindBy(css = "button[type=submit]") WebElement submit;
+
+  public LoginPage(WebDriver driver) {
+    this.driver = driver;
+    PageFactory.initElements(driver, this);           // wire @FindBy fields
+  }
+
+  public void login(String u, String p) {
+    username.sendKeys(u);
+    password.sendKeys(p);
+    submit.click();
+  }
+}
+
+// Test
+LoginPage login = new LoginPage(driver);
+login.login("alice", "secret");` },
+          { md: "Use a **BaseTest** for driver setup/teardown (inheritance), keep locators in page objects, and keep tests free of raw `By` selectors." },
+        ]},
+        { id: "grid", h: "Selenium Grid (parallel & remote)", blocks: [
+          { md: "**Selenium Grid** distributes tests across machines/browsers for parallel and cross-browser execution. A **Hub/Router** receives tests and routes them to **Nodes** that own the browsers. Tests connect via `RemoteWebDriver` instead of a local driver." },
+          { code: `// Run on a remote Grid node
+DesiredCapabilities caps = new DesiredCapabilities();
+ChromeOptions options = new ChromeOptions();
+WebDriver driver = new RemoteWebDriver(
+    new URL("http://grid-host:4444/wd/hub"), options);` },
+          { note: "Grid + TestNG parallel execution is how you cut a long cross-browser regression from hours to minutes. Cloud grids (BrowserStack, Sauce Labs) provide the node matrix for you.", t: "tip" },
+        ]},
+        { id: "runner", h: "Integration with TestNG / JUnit", blocks: [
+          { md: "A runner provides structure, assertions, parallelism and reporting. **TestNG** is common with Selenium/Java." },
+          { code: `public class LoginTest extends BaseTest {
+  @BeforeMethod public void setUp()  { driver.get(baseUrl + "/login"); }
+  @AfterMethod  public void tearDown(){ driver.quit(); }
+
+  @Test(groups = "smoke")
+  public void validLogin() {
+    new LoginPage(driver).login("alice", "secret");
+    Assert.assertTrue(driver.getCurrentUrl().contains("dashboard"));
+  }
+
+  @Test(dataProvider = "creds")     // data-driven
+  public void invalidLogins(String u, String p) { /* ... */ }
+}` },
+          { md: "Key TestNG features: `@Test/@BeforeMethod/@AfterMethod`, groups, `dataProvider` (data-driven), priorities, and `testng.xml` for parallel execution and suites." },
+        ]},
+        { id: "best", h: "Best practices", blocks: [
+          { md: "- **Explicit waits everywhere** — never `Thread.sleep`, never mix wait types.\n- **Stable locators** — `id`/`data-testid`/CSS over absolute XPath.\n- **Page Object Model + BaseTest** to stay DRY and maintainable.\n- **Always `driver.quit()`** in teardown to free sessions.\n- **Independent, atomic tests** with their own data.\n- **Parallel + Grid** for cross-browser speed.\n- **Externalise config/data**; add reporting (Allure/ExtentReports)." },
+        ]},
+        { id: "interview", h: "Interview Q&A", blocks: [
+          { md: "- **Implicit vs explicit vs fluent wait?** Global presence polling / condition on a specific element / explicit with custom polling+ignored exceptions.\n- **Why not Thread.sleep?** Fixed delay — too short = flaky, too long = slow.\n- **findElement vs findElements?** Single element (throws if absent) vs a list (empty if none).\n- **How to handle dropdowns/alerts/frames?** Select class / switchTo().alert() / switchTo().frame().\n- **What is PageFactory?** Initialises @FindBy page-object fields.\n- **What is Selenium Grid?** Distributes tests across nodes for parallel/cross-browser runs.\n- **Selenium vs Playwright?** Mature/multi-language with manual waits vs modern with auto-waiting." },
+        ]},
+      ],
+    },
+
+    /* ═══════════════════ CYPRESS (FULL) ═══════════════════ */
+    {
+      id: "cypress",
+      icon: "🌲",
+      title: "Cypress — The Complete Guide",
+      tagline: "In-browser architecture, commands & chaining, retry-able assertions, cy.intercept network control, fixtures & custom commands, config, debugging and CI.",
+      sections: [
+        { id: "why", h: "What is Cypress & why it's different", blocks: [
+          { md: "**Cypress** is a JavaScript-first end-to-end testing framework that **runs inside the browser**, in the same run-loop as your application. This gives it fast, reliable execution, automatic waiting and an exceptional developer experience (time-travel debugging)." },
+          { md: "Key traits: **JS/TS only**, automatic waiting & retry-ability, network stubbing built in, a visual Test Runner, and great docs. Historically Chromium-focused (now broader browser support)." },
+          { note: "Because it runs in the browser, Cypress has native access to your app — but that architecture also limits multi-tab/multi-origin scenarios (improving over time).", t: "key" },
+        ]},
+        { id: "install", h: "Setup & project structure", blocks: [
+          { code: `npm install -D cypress
+npx cypress open      # interactive Test Runner
+npx cypress run       # headless (CI)` },
+          { code: `cypress/
+├─ e2e/            # *.cy.js test specs
+├─ fixtures/       # static test data (JSON)
+├─ support/
+│  ├─ commands.js  # custom commands
+│  └─ e2e.js       # global hooks/setup
+cypress.config.js  # baseUrl, env, settings` },
+        ]},
+        { id: "architecture", h: "Architecture & retry-ability", blocks: [
+          { md: "Cypress commands are **asynchronous but written synchronously** — they're queued and run in order. Crucially, commands and assertions **automatically retry** until they pass or time out, so you rarely wait manually." },
+          { md: "- `cy.get()` retries finding the element until it exists.\n- Assertions (`should`) retry until they pass.\n- This **retry-ability** is what removes flakiness — but it means you **don't assign Cypress results to variables** (use aliases or `.then()` instead)." },
+          { note: "You can't do `const el = cy.get('x')` — commands are async/queued. Use `.then(el => ...)` or `.as('alias')` to work with subjects.", t: "warn" },
+        ]},
+        { id: "firsttest", h: "Anatomy of a test", blocks: [
+          { code: `describe('Login', () => {
+  it('signs in with valid credentials', () => {
+    cy.visit('/login');
+    cy.get('[data-cy=username]').type('alice');
+    cy.get('[data-cy=password]').type('secret');
+    cy.contains('button', 'Sign in').click();
+    cy.url().should('include', '/dashboard');
+    cy.get('[data-cy=greeting]').should('have.text', 'Welcome, Alice');
+  });
+});` },
+        ]},
+        { id: "commands", h: "Core commands & chaining", blocks: [
+          { md: "Commands **chain**, each yielding a *subject* to the next. The chain is the Cypress idiom." },
+          { md: "| Command | Does |\n|---|---|\n| `cy.visit(url)` | load a page |\n| `cy.get(selector)` | find element(s) (retries) |\n| `cy.contains(text)` | find by text |\n| `cy.find(sel)` | find within the previous subject |\n| `cy.within(fn)` | scope commands to a container |\n| `.click()` / `.type()` / `.clear()` | interact |\n| `.check()` / `.select()` | checkbox / dropdown |\n| `.first()/.last()/.eq(n)` | pick from a set |\n| `.then(fn)` | work with the yielded subject |\n| `.as('name')` / `cy.get('@name')` | alias & reuse |" },
+          { code: `cy.get('.cart').within(() => {
+  cy.get('[data-cy=item]').should('have.length', 3);
+  cy.contains('Pro plan').find('button').click();
+});
+cy.get('[data-cy=email]').as('email');
+cy.get('@email').type('a@b.com');` },
+        ]},
+        { id: "assertions", h: "Assertions (implicit & explicit)", blocks: [
+          { md: "**Implicit** assertions use `.should()` / `.and()` and **auto-retry** with the subject. **Explicit** assertions use `expect()` (BDD/Chai) inside `.then()`." },
+          { code: `// Implicit (retried) — the Cypress way
+cy.get('[data-cy=total]').should('have.text', '$84,300');
+cy.get('[data-cy=alert]').should('be.visible')
+                         .and('contain', 'Saved');
+cy.get('li').should('have.length', 5);
+
+// Explicit (one-time) — inside .then()
+cy.get('[data-cy=total]').then(($el) => {
+  expect($el.text()).to.eq('$84,300');
+});` },
+          { note: "Prefer implicit .should() so the assertion retries. expect() inside .then() captures a snapshot and won't retry.", t: "key" },
+        ]},
+        { id: "network", h: "Network control (cy.intercept)", blocks: [
+          { md: "`cy.intercept()` lets you **spy on**, **stub**, or **modify** network requests — to make tests deterministic, exercise error paths, or wait on a specific call via an **alias**." },
+          { code: `// Stub a response from a fixture
+cy.intercept('GET', '/api/orders', { fixture: 'orders.json' }).as('orders');
+cy.visit('/orders');
+cy.wait('@orders');                       // wait for the call
+cy.get('[data-cy=row]').should('have.length', 3);
+
+// Force an error path
+cy.intercept('POST', '/api/pay', { statusCode: 500 }).as('pay');
+
+// Spy (don't stub) and assert on the request
+cy.intercept('POST', '/api/track').as('track');
+cy.get('button').click();
+cy.wait('@track').its('request.body').should('include', { event: 'click' });` },
+          { note: "cy.wait('@alias') is the right way to synchronize on a network call — far better than cy.wait(2000) fixed delays.", t: "warn" },
+        ]},
+        { id: "fixtures", h: "Fixtures & custom commands", blocks: [
+          { md: "**Fixtures** are static JSON test data in `cypress/fixtures`. **Custom commands** (in `support/commands.js`) extend `cy` with reusable actions like `cy.login()`." },
+          { code: `// cypress/fixtures/user.json -> { "email": "a@b.com" }
+cy.fixture('user').then((user) => {
+  cy.get('[data-cy=email]').type(user.email);
+});
+
+// support/commands.js — a reusable login command
+Cypress.Commands.add('login', (user, pass) => {
+  cy.session([user, pass], () => {     // cache the logged-in session
+    cy.visit('/login');
+    cy.get('[data-cy=username]').type(user);
+    cy.get('[data-cy=password]').type(pass);
+    cy.contains('button', 'Sign in').click();
+    cy.url().should('include', '/dashboard');
+  });
+});
+// usage: cy.login('alice', 'secret');` },
+          { note: "cy.session() caches and restores login state across tests — the Cypress equivalent of Playwright's storageState, a big speed win.", t: "tip" },
+        ]},
+        { id: "hooks", h: "Hooks & configuration", blocks: [
+          { code: `describe('Checkout', () => {
+  before(()     => { /* once before all */ });
+  beforeEach(() => { cy.login('alice', 'secret'); cy.visit('/cart'); });
+  afterEach(()  => { /* cleanup */ });
+  it('applies a coupon', () => { /* ... */ });
+});` },
+          { code: `// cypress.config.js
+const { defineConfig } = require('cypress');
+module.exports = defineConfig({
+  e2e: {
+    baseUrl: 'https://app.example.com',   // enables cy.visit('/login')
+    defaultCommandTimeout: 8000,
+    retries: { runMode: 2, openMode: 0 },
+    video: true,
+  },
+  env: { apiUrl: 'https://api.example.com' },
+});` },
+        ]},
+        { id: "pom", h: "Structuring tests (POM vs App Actions)", blocks: [
+          { md: "You *can* use Page Objects in Cypress, but the team often prefers **custom commands / 'App Actions'** — reusable `cy` commands that perform business actions. Both keep specs readable and selectors centralised." },
+          { code: `// A simple page-object-style module
+export const LoginPage = {
+  visit:  () => cy.visit('/login'),
+  fill:   (u, p) => {
+    cy.get('[data-cy=username]').type(u);
+    cy.get('[data-cy=password]').type(p);
+  },
+  submit: () => cy.contains('button', 'Sign in').click(),
+};` },
+          { note: "Cypress's official guidance leans toward custom commands over heavy POM — but consistency matters more than dogma. Keep selectors in one place either way.", t: "tip" },
+        ]},
+        { id: "component", h: "Component testing", blocks: [
+          { md: "Beyond E2E, Cypress can **mount and test individual UI components** (React, Vue, Angular, Svelte) in a real browser — bridging unit and E2E with real rendering." },
+          { code: `import Button from './Button';
+it('emits click', () => {
+  const onClick = cy.stub();
+  cy.mount(<Button label="Save" onClick={onClick} />);
+  cy.get('button').click();
+  cy.wrap(onClick).should('have.been.calledOnce');
+});` },
+        ]},
+        { id: "debug", h: "Debugging & tooling", blocks: [
+          { md: "- **Test Runner / time-travel** — hover over each command to see the DOM snapshot *at that step*.\n- **`.debug()`** — log the subject and pause in devtools.\n- **`cy.pause()`** — pause execution to step through.\n- **Automatic screenshots on failure** and **video** of the whole run.\n- **Cypress Cloud** — dashboard, parallelisation, flake detection, recordings." },
+          { note: "Time-travel debugging is Cypress's signature feature — you can see exactly what the DOM looked like when a command ran or an assertion failed.", t: "key" },
+        ]},
+        { id: "ci", h: "Running in CI", blocks: [
+          { code: `# GitHub Actions
+- uses: cypress-io/github-action@v6
+  with:
+    build: npm run build
+    start: npm start
+    wait-on: 'http://localhost:3000'
+    record: true            # to Cypress Cloud
+    parallel: true` },
+          { note: "Cypress Cloud enables parallelisation and load-balancing across CI machines, plus flake detection and full run recordings.", t: "tip" },
+        ]},
+        { id: "best", h: "Best practices", blocks: [
+          { md: "- **Use `data-cy` attributes** for selectors — decoupled from styling/text.\n- **Don't assign command results to variables** — use `.then()` / aliases.\n- **No fixed waits** — rely on retry-ability and `cy.wait('@alias')`.\n- **`cy.session()`** to cache login across tests.\n- **Stub network with `cy.intercept`** for deterministic, fast tests.\n- **Keep tests independent**; reset state via API or tasks.\n- **Custom commands** for repeated flows." },
+        ]},
+        { id: "interview", h: "Interview Q&A", blocks: [
+          { md: "- **Why is Cypress less flaky?** Runs in-browser with automatic waiting + retry-able assertions.\n- **Implicit vs explicit assertions?** `.should()` (retried) vs `expect()` in `.then()` (one-time).\n- **Why can't you assign `cy.get()` to a variable?** Commands are async/queued — use `.then()` or aliases.\n- **How do you stub network?** `cy.intercept()` with a fixture/response; wait via `cy.wait('@alias')`.\n- **How do you reuse login?** `cy.session()` + a custom command.\n- **Cypress vs Playwright vs Selenium?** In-browser DX (JS-only) vs modern cross-browser auto-wait vs mature multi-language with manual waits." },
+        ]},
+      ],
+    },
+
+    /* ═══════════════════ JENKINS (FULL) ═══════════════════ */
+    {
+      id: "jenkins",
+      icon: "🧑‍🏭",
+      title: "Jenkins — The Complete Guide",
+      tagline: "Architecture, freestyle vs pipeline, declarative Jenkinsfile syntax, agents, plugins, triggers, credentials, and how QA wires tests + reports into the pipeline.",
+      sections: [
+        { id: "why", h: "What is Jenkins", blocks: [
+          { md: "**Jenkins** is the widely-used, open-source, **self-hosted** automation server that popularised mainstream CI/CD. It builds, tests and deploys software automatically, defined as **pipeline-as-code**, with a vast **plugin ecosystem** (1800+) that integrates virtually any tool." },
+          { note: "Strengths: free, flexible, huge ecosystem, full control. Trade-offs: you maintain and secure the server + plugins, and the UI feels dated vs modern SaaS CI.", t: "key" },
+        ]},
+        { id: "architecture", h: "Architecture: controller & agents", blocks: [
+          { md: "- **Controller (master)** — the brain: schedules builds, manages config, serves the UI, dispatches work.\n- **Agents (nodes)** — workers that execute builds, often on different OS/environments. Selected via **labels**.\n- **Executors** — parallel build slots on a node." },
+          { md: "Distributing builds across agents enables **parallel** and **cross-platform** execution (e.g. a Windows agent for IE testing, Linux agents for the rest)." },
+        ]},
+        { id: "jobtypes", h: "Freestyle vs Pipeline", blocks: [
+          { md: "- **Freestyle job** — configured through the UI (build steps, SCM, triggers). Simple, but not version-controlled and hard to scale.\n- **Pipeline** — defined as code in a **`Jenkinsfile`** committed to the repo. Versioned, reviewable, reproducible — the modern standard.\n- **Multibranch Pipeline** — auto-creates a pipeline per branch/PR from the Jenkinsfile." },
+          { note: "Always prefer Pipeline (Jenkinsfile) over freestyle — pipeline-as-code lives with the repo, is reviewed in PRs, and survives server rebuilds.", t: "tip" },
+        ]},
+        { id: "declarative", h: "Declarative pipeline (Jenkinsfile)", blocks: [
+          { md: "The **declarative** syntax is the recommended, structured way to write a Jenkinsfile: `pipeline { agent · environment · stages · post }`." },
+          { code: `pipeline {
+  agent any
+  environment { APP_ENV = 'staging' }
+  options { timeout(time: 30, unit: 'MINUTES') }
+
+  stages {
+    stage('Build')  { steps { sh 'npm ci' } }
+    stage('Lint')   { steps { sh 'npm run lint' } }
+    stage('Test')   {
+      steps { sh 'npm test' }
+      post { always { junit 'reports/*.xml' } }   // publish results
+    }
+    stage('Deploy') {
+      when { branch 'main' }
+      steps { sh "./deploy.sh \${APP_ENV}" }
+    }
+  }
+
+  post {
+    success { echo 'Pipeline passed' }
+    failure { mail to: 'qa@x.com', subject: "Build \${env.BUILD_NUMBER} failed" }
+    always  { archiveArtifacts artifacts: 'dist/**', allowEmptyArchive: true }
+  }
+}` },
+          { md: "Key blocks: **agent** (where it runs), **environment** (vars), **stages/steps** (the work), **when** (conditional stages), **post** (always/success/failure actions), **options** (timeouts, retries)." },
+        ]},
+        { id: "parallel", h: "Parallel stages & QA gates", blocks: [
+          { md: "Run independent work concurrently with `parallel`, and gate promotion on test results — exactly where QA plugs in." },
+          { code: `stage('Tests') {
+  parallel {
+    stage('Unit')    { steps { sh 'npm run test:unit' } }
+    stage('API')     { steps { sh 'npm run test:api' } }
+    stage('E2E')     { agent { label 'chrome' }
+                       steps { sh 'npx playwright test' } }
+  }
+}
+stage('Quality Gate') {
+  steps {
+    // fail the build if coverage/quality thresholds aren't met
+    sh 'npm run coverage:check'
+  }
+}` },
+          { note: "QA fit: tests run as staged gates that block promotion; publish JUnit/HTML/Allure reports and upload screenshots/traces as artifacts. Keep the PR pipeline under ~10 minutes.", t: "key" },
+        ]},
+        { id: "agents", h: "Agents, labels & scripted pipeline", blocks: [
+          { md: "Target specific agents with **labels** (`agent { label 'linux && chrome' }`). For complex logic beyond declarative, the **scripted** pipeline offers full Groovy." },
+          { code: `// Scripted pipeline (full Groovy control)
+node('linux') {
+  stage('Checkout') { checkout scm }
+  stage('Build')    { sh 'make build' }
+  stage('Test')     {
+    try   { sh 'make test' }
+    finally { junit 'reports/*.xml' }
+  }
+}` },
+        ]},
+        { id: "triggers", h: "Build triggers", blocks: [
+          { md: "How pipelines start:\n- **SCM webhook** — Git pushes/PRs trigger a build (best — instant).\n- **Poll SCM** — Jenkins polls the repo on a schedule (`H/5 * * * *`).\n- **Cron / scheduled** — nightly regression (`triggers { cron('H 2 * * *') }`).\n- **Upstream/downstream** — one job triggers another.\n- **Manual / parameterised** — start with input parameters." },
+          { code: `pipeline {
+  agent any
+  triggers { cron('H 2 * * *') }      // nightly at ~2am
+  parameters {
+    choice(name: 'ENV', choices: ['staging','prod'])
+    booleanParam(name: 'RUN_E2E', defaultValue: true)
+  }
+  // ... use params.ENV / params.RUN_E2E
+}` },
+        ]},
+        { id: "plugins", h: "Plugins & credentials", blocks: [
+          { md: "**Plugins** extend everything: **Git**, **Docker**, **Kubernetes**, test reporters (**JUnit**, **HTML Publisher**, **Allure**), **Blue Ocean** (modern pipeline UI), **Pipeline**, Slack/email notifications." },
+          { md: "**Credentials** are stored securely in Jenkins and injected without hard-coding secrets:" },
+          { code: `stage('Deploy') {
+  steps {
+    withCredentials([usernamePassword(
+        credentialsId: 'docker-registry',
+        usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+      sh 'docker login -u $USER -p $PASS'
+    }
+  }
+}` },
+          { note: "Never hard-code secrets in a Jenkinsfile. Use the credentials store + withCredentials so secrets are masked in logs.", t: "warn" },
+        ]},
+        { id: "shared", h: "Multibranch & shared libraries", blocks: [
+          { md: "- **Multibranch Pipeline** scans a repo and creates a pipeline per branch/PR automatically from each branch's Jenkinsfile — perfect for testing every PR.\n- **Shared Libraries** let teams extract common pipeline code (e.g. a standard `runTests()` step) into a versioned library reused across many Jenkinsfiles." },
+        ]},
+        { id: "best", h: "Best practices", blocks: [
+          { md: "- **Pipeline-as-code** (Jenkinsfile) in the repo, reviewed in PRs.\n- **Fast feedback** — fail fast, parallelise, keep PR builds short; run heavy regression nightly.\n- **Quality gates** that block promotion on test/coverage failures.\n- **Publish reports & artifacts** (JUnit, HTML, screenshots, traces).\n- **Secrets in the credentials store**, never in code.\n- **Ephemeral agents** (Docker/K8s) for clean, reproducible builds.\n- **Shared libraries** to avoid copy-pasted pipeline logic." },
+        ]},
+        { id: "interview", h: "Interview Q&A", blocks: [
+          { md: "- **Freestyle vs Pipeline?** UI-configured vs pipeline-as-code (Jenkinsfile) — prefer pipeline.\n- **Declarative vs scripted?** Structured/opinionated vs full Groovy flexibility.\n- **Controller vs agent?** Brain (schedules) vs worker (executes), selected by labels.\n- **How do tests fit?** Staged gates (unit→API→E2E) that block promotion; publish reports.\n- **How do you handle secrets?** Credentials store + withCredentials (masked).\n- **What's a multibranch pipeline?** Auto-creates a pipeline per branch/PR from the Jenkinsfile.\n- **How do you speed it up?** Parallel stages, ephemeral agents, fast PR gate + nightly regression." },
+        ]},
+      ],
+    },
+
+    /* ═══════════════════ KUBERNETES (FULL) ═══════════════════ */
+    {
+      id: "kubernetes",
+      icon: "☸️",
+      title: "Kubernetes — The Complete Guide",
+      tagline: "Architecture, the core objects (Pods, Deployments, Services), config & secrets, probes, kubectl, scaling — and why QA cares: ephemeral environments and resilience testing.",
+      sections: [
+        { id: "why", h: "What is Kubernetes & why", blocks: [
+          { md: "**Kubernetes (K8s)** automates the deployment, scaling and management of **containerized applications** across a cluster of machines. It **self-heals** (restarts failed containers), scales horizontally, rolls out updates safely, and provides service discovery and load balancing." },
+          { note: "It solves: 'how do I run hundreds of containers reliably, keep them healthy, scale them, and update them with zero downtime?' — declaratively.", t: "key" },
+        ]},
+        { id: "architecture", h: "Architecture: control plane & nodes", blocks: [
+          { md: "**Control plane** (the brain):\n- **kube-apiserver** — the front door; all commands go through it.\n- **etcd** — the cluster's key-value store (desired & actual state).\n- **scheduler** — assigns pods to nodes.\n- **controller-manager** — runs control loops that drive actual state toward desired state." },
+          { md: "**Worker nodes** (run the workloads):\n- **kubelet** — agent that ensures the node's containers are running.\n- **kube-proxy** — networking/routing rules.\n- **container runtime** — runs containers (containerd, CRI-O)." },
+          { md: "K8s is **declarative**: you describe the desired state in YAML; controllers continuously reconcile reality toward it." },
+        ]},
+        { id: "objects", h: "The core objects", blocks: [
+          { md: "| Object | Purpose |\n|---|---|\n| **Pod** | Smallest unit — one or more containers sharing network/storage |\n| **ReplicaSet** | Keeps N identical pod replicas running |\n| **Deployment** | Manages ReplicaSets — rollouts, rollbacks, scaling |\n| **Service** | Stable network endpoint + load balancing for pods |\n| **Ingress** | HTTP(S) routing from outside into Services |\n| **Namespace** | Virtual cluster for isolation (great for test envs) |\n| **ConfigMap** | Non-secret configuration |\n| **Secret** | Sensitive data (credentials, tokens) |\n| **PersistentVolume / PVC** | Durable storage |" },
+        ]},
+        { id: "pods", h: "Pods", blocks: [
+          { md: "A **Pod** is the smallest deployable unit — usually one container (sometimes a main + 'sidecar'). Pods are **ephemeral and disposable**: if one dies, K8s replaces it with a new pod (new IP), which is why you never address pods directly — you use a Service." },
+          { code: `apiVersion: v1
+kind: Pod
+metadata: { name: web, labels: { app: web } }
+spec:
+  containers:
+    - name: web
+      image: myapp:1.4.2
+      ports: [{ containerPort: 8080 }]` },
+        ]},
+        { id: "deployments", h: "Deployments — rollouts & scaling", blocks: [
+          { md: "A **Deployment** is what you actually use to run an app. It manages a ReplicaSet to keep the desired number of pods, and provides **rolling updates** (zero-downtime), **rollbacks**, and **scaling**." },
+          { code: `apiVersion: apps/v1
+kind: Deployment
+metadata: { name: web }
+spec:
+  replicas: 3                         # desired pod count
+  selector: { matchLabels: { app: web } }
+  strategy: { type: RollingUpdate }   # zero-downtime updates
+  template:
+    metadata: { labels: { app: web } }
+    spec:
+      containers:
+        - name: web
+          image: myapp:1.4.2
+          readinessProbe:
+            httpGet: { path: /health, port: 8080 }` },
+          { code: `kubectl scale deployment/web --replicas=5     # scale
+kubectl set image deployment/web web=myapp:1.5 # rolling update
+kubectl rollout undo deployment/web            # rollback` },
+        ]},
+        { id: "services", h: "Services & Ingress", blocks: [
+          { md: "Pods are ephemeral with changing IPs, so a **Service** gives a stable virtual IP/DNS name and load-balances across the matching pods. Types:" },
+          { md: "- **ClusterIP** (default) — reachable only inside the cluster.\n- **NodePort** — exposes the service on each node's port.\n- **LoadBalancer** — provisions an external cloud load balancer.\n- **Ingress** — an HTTP(S) router (host/path rules) sitting in front of Services." },
+          { code: `apiVersion: v1
+kind: Service
+metadata: { name: web }
+spec:
+  selector: { app: web }     # routes to pods with this label
+  ports: [{ port: 80, targetPort: 8080 }]
+  type: ClusterIP` },
+        ]},
+        { id: "config", h: "ConfigMaps, Secrets & probes", blocks: [
+          { md: "**ConfigMaps** hold non-secret config; **Secrets** hold sensitive data (base64-encoded, ideally encrypted at rest) — both injected as env vars or mounted files. **Probes** let K8s know a container's health:" },
+          { md: "- **livenessProbe** — is the app alive? Fails → restart the pod.\n- **readinessProbe** — is it ready for traffic? Fails → removed from the Service.\n- **startupProbe** — for slow-starting apps." },
+          { code: `livenessProbe:
+  httpGet: { path: /healthz, port: 8080 }
+  initialDelaySeconds: 10
+  periodSeconds: 5
+readinessProbe:
+  httpGet: { path: /ready, port: 8080 }` },
+          { note: "Probes are themselves testable resilience features — verify the app is removed from rotation when /ready fails, and restarted when /healthz fails.", t: "tip" },
+        ]},
+        { id: "kubectl", h: "Essential kubectl commands", blocks: [
+          { code: `kubectl get pods                       # list pods
+kubectl get deployments,services       # multiple resources
+kubectl describe pod web-xyz           # detailed state & events
+kubectl logs web-xyz -f                # stream container logs
+kubectl exec -it web-xyz -- sh         # shell into a container
+kubectl apply -f deployment.yaml       # create/update from YAML
+kubectl delete -f deployment.yaml      # remove
+kubectl port-forward svc/web 8080:80   # access a service locally
+kubectl get pods -n test-pr-123        # within a namespace
+kubectl rollout status deployment/web  # watch a rollout` },
+          { note: "describe (events) and logs are your first stops when debugging a failing pod — they reveal crash loops, image-pull errors and failed probes.", t: "tip" },
+        ]},
+        { id: "scaling", h: "Scaling & self-healing", blocks: [
+          { md: "K8s **self-heals**: if a pod crashes or a node dies, controllers reschedule replacements to maintain the desired count. The **Horizontal Pod Autoscaler (HPA)** automatically scales replicas based on CPU/memory or custom metrics." },
+          { code: `kubectl autoscale deployment web --min=2 --max=10 --cpu-percent=70` },
+        ]},
+        { id: "qa", h: "Why QA cares about Kubernetes", blocks: [
+          { md: "K8s gives testers three superpowers:" },
+          { md: "1. **Ephemeral environments** — spin up a fresh, isolated namespace/environment **per pull request**, test, then tear it down. No more 'someone broke staging' or test-data collisions.\n2. **Resilience / chaos testing** — `kubectl delete pod` and verify the app self-heals and the Service keeps serving (failover). Tools like Chaos Mesh formalise this.\n3. **Scalable performance environments** — scale replicas to mirror production for realistic load tests." },
+          { code: `# Resilience test: kill a pod, expect self-healing
+kubectl delete pod web-xyz
+kubectl get pods -w        # watch a replacement appear, Service stays up` },
+          { note: "Strong senior answer: 'K8s lets me give every PR its own isolated environment and chaos-test self-healing — quality benefits, not just ops.'", t: "key" },
+        ]},
+        { id: "best", h: "Best practices (QA lens)", blocks: [
+          { md: "- **Ephemeral per-PR namespaces** for isolated, reproducible test runs.\n- **Health probes** on every workload (and test them).\n- **Resource requests/limits** so tests reflect real constraints.\n- **Config as code** (YAML in git) for reproducibility.\n- **Test rollouts & rollbacks**, not just the happy path.\n- **Chaos-test** self-healing and failover before production does." },
+        ]},
+        { id: "interview", h: "Interview Q&A", blocks: [
+          { md: "- **Pod vs Deployment vs Service?** Smallest unit / manages pod replicas + rollouts / stable network endpoint + load balancing.\n- **Why not address pods directly?** They're ephemeral with changing IPs — use a Service.\n- **Liveness vs readiness probe?** Restart-if-unhealthy vs remove-from-traffic-if-not-ready.\n- **How does a rolling update work?** Gradually replaces old pods with new while keeping the app available; rollback on failure.\n- **Why does QA care?** Ephemeral per-PR environments, resilience/chaos testing, scalable perf envs.\n- **ConfigMap vs Secret?** Non-sensitive config vs sensitive data." },
+        ]},
+      ],
+    },
   ];
 
   window.QA_GUIDES = { guides };
