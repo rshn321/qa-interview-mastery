@@ -110,6 +110,7 @@
 
   const views = { dashboard, learn, flashcards, mock, roadmap, guide, docs, glossary, types, tools,
     ddSql: () => renderGuide("sql"), ddAuto: () => renderGuide("automation"),
+    ddPlay: () => renderGuide("playwright"),
     ddPerf: () => renderGuide("performance"), ddCicd: () => renderGuide("cicd") };
 
   /* ---------- DASHBOARD ---------- */
