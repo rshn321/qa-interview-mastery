@@ -846,32 +846,37 @@
   /* ---------- TESTING TYPES (the full catalog) ---------- */
   const typesData = window.QA_TYPES || { categories: [], types: [] };
 
+  const typeByName = new Map(typesData.types.map((x, i) => [x.t, i]));
+  const typeCat = (id) => typesData.categories.find((c) => c.id === id) || { icon: "", name: "" };
+
   function types() {
     const cats = typesData.categories;
     content.innerHTML = `
       <div class="page-head">
         <span class="eyebrow">🧪 Catalog</span>
         <h1>Every Kind of Testing</h1>
-        <p>A complete, categorized map of testing types — ${typesData.types.length} kinds across ${cats.length} families, from black-box and the test levels to performance, security, and modern techniques like chaos and mutation testing. Filter or search to find any one.</p>
+        <p>A complete, categorized map of testing types — ${typesData.types.length} kinds across ${cats.length} families, from black-box and the test levels to performance, security, and modern techniques like chaos and mutation testing. <strong>Click any card</strong> for the full detail: when to use it, how it's done, and a practical tip.</p>
       </div>
       <div class="gl-toolbar">
         <div class="search-wrap" style="max-width:none">
           <span class="search-ico">🔎</span>
-          <input id="tySearch" type="search" placeholder="Search testing types… (e.g. smoke, soak, mutation, IDOR)" autocomplete="off" />
+          <input id="tySearch" type="search" placeholder="Search testing types… (e.g. smoke, soak, mutation, chaos)" autocomplete="off" />
         </div>
       </div>
       <div class="gl-chips" id="tyChips">
         <button class="opt-chip sel" data-cat="all">All (${typesData.types.length})</button>
         ${cats.map((c) => `<button class="opt-chip" data-cat="${c.id}">${c.icon} ${c.name} (${typesData.types.filter((t) => t.cat === c.id).length})</button>`).join("")}
       </div>
-      <div id="tyList"></div>`;
+      <div id="tyList"></div>
+      <div class="ty-modal-overlay hidden" id="tyModal"></div>`;
 
     let activeCat = "all", term = "";
+    const modal = $("#tyModal");
 
     function draw() {
       const list = $("#tyList");
       const q = term.toLowerCase();
-      const matches = (x) => !q || (x.t + " " + x.d + " " + (x.eg || "")).toLowerCase().includes(q);
+      const matches = (x) => !q || (x.t + " " + x.d + " " + (x.long || "") + " " + (x.eg || "")).toLowerCase().includes(q);
       const shownCats = cats.filter((c) => activeCat === "all" || c.id === activeCat);
 
       let total = 0;
@@ -882,16 +887,17 @@
         return `<section class="ty-section">
           <h2 class="ty-h">${c.icon} ${c.name} <span class="ty-count">${items.length}</span></h2>
           <div class="gl-grid">
-            ${items.map((x) => `<div class="gl-card">
+            ${items.map((x) => `<div class="gl-card ty-card" data-ty="${typeByName.get(x.t)}" role="button" tabindex="0">
               <div class="gl-term">${hlMark(x.t, term)}</div>
-              <div class="gl-def">${renderMarkdown(x.d)}${x.eg ? `<div class="ty-eg">💡 ${mdInline(x.eg)}</div>` : ""}</div>
+              <div class="gl-def">${renderMarkdown(x.d)}</div>
+              <span class="ty-more">View detail →</span>
             </div>`).join("")}
           </div>
         </section>`;
       }).join("");
 
       list.innerHTML = total
-        ? `<p class="muted tiny" style="margin-bottom:14px">${total} testing type${total === 1 ? "" : "s"}</p>${sections}`
+        ? `<p class="muted tiny" style="margin-bottom:14px">${total} testing type${total === 1 ? "" : "s"} · click for detail</p>${sections}`
         : `<div class="sr-empty">No testing types match your search.</div>`;
     }
 
@@ -902,12 +908,72 @@
       return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + t.length)) + "</mark>" + esc(text.slice(i + t.length));
     }
 
+    function openModal(i) {
+      const x = typesData.types[i];
+      if (!x) return;
+      const c = typeCat(x.cat);
+      const meta = [
+        ["🎯", "When to use", x.when],
+        ["🛠️", "How it's done", x.how],
+        ["💡", "Tip", x.tip],
+        ["📌", "Example", x.eg],
+      ].filter((m) => m[2]);
+      modal.innerHTML = `
+        <div class="ty-modal" role="dialog" aria-modal="true" aria-label="${esc(x.t)}">
+          <button class="ty-close" aria-label="Close">✕</button>
+          <span class="pill accent">${c.icon} ${c.name}</span>
+          <h2 class="ty-modal-title">${mdInline(x.t)}</h2>
+          <p class="ty-modal-lead">${mdInline(x.d)}</p>
+          ${x.long ? `<div class="ty-block"><h4>In detail</h4>${renderMarkdown(x.long)}</div>` : ""}
+          ${meta.length ? `<div class="ty-meta-grid">
+            ${meta.map(([ico, label, val]) => `<div class="ty-meta-card"><h4>${ico} ${label}</h4>${renderMarkdown(val)}</div>`).join("")}
+          </div>` : ""}
+          ${(x.related && x.related.length) ? `<div class="ty-block"><h4>Related types</h4>
+            <div class="ty-related">${x.related.map((r) => {
+              const ri = typeByName.get(r);
+              return ri !== undefined
+                ? `<button class="ty-rel" data-ty="${ri}">${esc(r)} →</button>`
+                : `<span class="ty-rel ty-rel-dead">${esc(r)}</span>`;
+            }).join("")}</div></div>` : ""}
+        </div>`;
+      modal.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      const m = modal.querySelector(".ty-modal");
+      if (m) m.scrollTop = 0;
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+      modal.innerHTML = "";
+      document.body.style.overflow = "";
+    }
+
     $("#tyChips").addEventListener("click", (e) => {
       const b = e.target.closest(".opt-chip"); if (!b) return;
       $$("#tyChips .opt-chip").forEach((x) => x.classList.remove("sel"));
       b.classList.add("sel"); activeCat = b.dataset.cat; draw();
     });
     $("#tySearch").addEventListener("input", (e) => { term = e.target.value.trim(); draw(); });
+
+    $("#tyList").addEventListener("click", (e) => {
+      const card = e.target.closest(".ty-card[data-ty]");
+      if (card) openModal(+card.dataset.ty);
+    });
+    $("#tyList").addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const card = e.target.closest(".ty-card[data-ty]");
+      if (card) { e.preventDefault(); openModal(+card.dataset.ty); }
+    });
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal || e.target.closest(".ty-close")) { closeModal(); return; }
+      const rel = e.target.closest(".ty-rel[data-ty]");
+      if (rel) openModal(+rel.dataset.ty);
+    });
+
+    const onKey = (e) => { if (e.key === "Escape" && !modal.classList.contains("hidden")) closeModal(); };
+    document.addEventListener("keydown", onKey);
+    viewTeardown = () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+
     draw();
   }
 

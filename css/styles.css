@@ -438,6 +438,35 @@ pre.codeblock {
 .ty-count { font-size: .72rem; font-weight: 600; color: var(--accent); background: var(--glow); padding: 2px 9px; border-radius: 99px; }
 .ty-eg { margin-top: 8px; font-size: .78rem; color: var(--text-faint); border-top: 1px dashed var(--border); padding-top: 8px; }
 
+/* clickable type cards */
+.ty-card { cursor: pointer; display: flex; flex-direction: column; position: relative; outline: none; }
+.ty-card:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+.ty-card .gl-def { flex: 1; }
+.ty-more { margin-top: 12px; font-size: .74rem; font-weight: 600; color: var(--accent); opacity: 0; transform: translateX(-4px); transition: all .15s var(--ease); }
+.ty-card:hover .ty-more, .ty-card:focus-visible .ty-more { opacity: 1; transform: none; }
+
+/* type detail modal */
+.ty-modal-overlay { position: fixed; inset: 0; z-index: 120; background: rgba(0,0,0,.55); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: flex-start; padding: 6vh 20px 40px; overflow-y: auto; animation: fade .18s var(--ease); }
+.ty-modal { position: relative; width: 100%; max-width: 660px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 30px 32px; animation: modalIn .25s var(--ease); }
+@keyframes modalIn { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: none; } }
+.ty-close { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-dim); font-size: 1rem; cursor: pointer; display: grid; place-items: center; transition: all .15s; }
+.ty-close:hover { color: var(--bad); border-color: var(--bad); }
+.ty-modal-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; margin: 12px 0 6px; padding-right: 36px; }
+.ty-modal-lead { color: var(--text-dim); font-size: 1rem; margin-bottom: 18px; }
+.ty-block { margin-bottom: 18px; }
+.ty-block h4 { font-size: .76rem; text-transform: uppercase; letter-spacing: .07em; color: var(--accent); margin-bottom: 8px; }
+.ty-block p { margin: 0; font-size: .92rem; }
+.ty-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+.ty-meta-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+.ty-meta-card h4 { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 6px; }
+.ty-meta-card p { margin: 0; font-size: .87rem; }
+.ty-related { display: flex; flex-wrap: wrap; gap: 8px; }
+.ty-rel { font-size: .8rem; font-weight: 500; padding: 7px 13px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer; font-family: inherit; transition: all .15s var(--ease); }
+.ty-rel:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+.ty-rel-dead { cursor: default; color: var(--text-faint); }
+.ty-rel-dead:hover { border-color: var(--border); color: var(--text-faint); transform: none; }
+@media (max-width: 560px) { .ty-meta-grid { grid-template-columns: 1fr; } .ty-modal { padding: 26px 20px; } }
+
 /* ░░ SEARCH OVERLAY ░░ */
 .search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); backdrop-filter: blur(4px); z-index: 100; display: flex; justify-content: center; padding-top: 90px; animation: fade .15s; }
 .search-panel { width: 100%; max-width: 640px; max-height: 70vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 8px; }
