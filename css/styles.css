@@ -94,7 +94,8 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 .brand-text strong { font-size: .98rem; font-weight: 700; display: block; line-height: 1.2; }
 .brand-text small { color: var(--text-dim); font-size: .73rem; }
 
-.nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.nav { display: flex; flex-direction: column; gap: 3px; flex: 1; overflow-y: auto; min-height: 0; padding-right: 4px; }
+.nav-group { font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--text-faint); padding: 14px 14px 5px; }
 .nav-item {
   display: flex; align-items: center; gap: 12px;
   padding: 11px 14px;
@@ -416,6 +417,32 @@ pre.codeblock {
 .guide-foot h2 { margin-bottom: 4px; }
 
 @media (max-width: 640px) { .guide-toc ol { grid-template-columns: 1fr; } }
+
+/* ░░ DEEP-DIVE GUIDES ░░ */
+.dd-layout { display: grid; grid-template-columns: 210px 1fr; gap: 36px; align-items: start; }
+.dd-toc { position: sticky; top: 80px; align-self: start; max-height: calc(100vh - 100px); overflow-y: auto; }
+.dd-toc-title { font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; color: var(--text-faint); font-weight: 700; margin-bottom: 10px; }
+.dd-toc ul { list-style: none; border-left: 2px solid var(--border); }
+.dd-toc li a { display: block; padding: 6px 13px; margin-left: -2px; border-left: 2px solid transparent; color: var(--text-dim); text-decoration: none; font-size: .82rem; transition: all .15s var(--ease); }
+.dd-toc li a:hover { color: var(--text); }
+.dd-toc li a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+.dd-article { min-width: 0; }
+.dd-section { scroll-margin-top: 78px; margin-bottom: 36px; animation: fade .3s var(--ease); }
+.dd-h { font-size: 1.32rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 14px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
+.dd-sub { font-size: 1.02rem; font-weight: 700; margin: 18px 0 8px; }
+.dd-article p { margin-bottom: 12px; }
+.dd-article strong { color: var(--text); font-weight: 600; }
+.dd-article ul, .dd-article ol { margin: 0 0 13px 22px; }
+.dd-article li { margin-bottom: 6px; }
+.dd-article table { border-collapse: collapse; width: 100%; margin: 4px 0 16px; font-size: .85rem; }
+.dd-article th, .dd-article td { border: 1px solid var(--border); padding: 8px 11px; text-align: left; vertical-align: top; }
+.dd-article th { background: var(--surface-2); }
+.dd-article code:not(pre code) { background: var(--surface-2); padding: 1px 6px; border-radius: 5px; color: var(--accent); font-size: .85em; }
+.dd-note { border-radius: var(--radius-sm); padding: 13px 16px; margin: 4px 0 15px; font-size: .9rem; border-left: 3px solid var(--accent); background: var(--surface-2); }
+.dd-note p { margin: 0; }
+.dd-key { border-left-color: var(--good); background: color-mix(in srgb, var(--good) 9%, transparent); }
+.dd-warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--warn) 9%, transparent); }
+@media (max-width: 820px) { .dd-layout { grid-template-columns: 1fr; } .dd-toc { display: none; } }
 
 /* ░░ GLOSSARY ░░ */
 .gl-toolbar { margin-bottom: 14px; }

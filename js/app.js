@@ -108,7 +108,9 @@
     window.scrollTo(0, 0);
   }
 
-  const views = { dashboard, learn, flashcards, mock, roadmap, guide, docs, glossary, types, tools };
+  const views = { dashboard, learn, flashcards, mock, roadmap, guide, docs, glossary, types, tools,
+    ddSql: () => renderGuide("sql"), ddAuto: () => renderGuide("automation"),
+    ddPerf: () => renderGuide("performance"), ddCicd: () => renderGuide("cicd") };
 
   /* ---------- DASHBOARD ---------- */
   function dashboard() {
@@ -1115,6 +1117,66 @@
     viewTeardown = () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
 
     draw();
+  }
+
+  /* ---------- DEEP-DIVE GUIDES (SQL, Automation, Performance, CI/CD) ---------- */
+  const guidesData = window.QA_GUIDES || { guides: [] };
+
+  function ddBlock(b) {
+    if (b.code !== undefined) return codeBlock(b.code);
+    if (b.note !== undefined) return `<div class="dd-note dd-${b.t || "tip"}">${renderMarkdown(b.note)}</div>`;
+    if (b.h !== undefined) return `<h3 class="dd-sub">${mdInline(b.h)}</h3>`;
+    if (b.md !== undefined) return renderMarkdown(b.md);
+    return "";
+  }
+
+  function renderGuide(id) {
+    const g = guidesData.guides.find((x) => x.id === id);
+    if (!g) { dashboard(); return; }
+    content.innerHTML = `
+      <div class="dd-layout">
+        <aside class="dd-toc">
+          <div class="dd-toc-title">${g.icon} On this page</div>
+          <ul id="ddToc">${g.sections.map((s) => `<li><a href="#dd-${s.id}" data-dd="${s.id}">${esc(s.h)}</a></li>`).join("")}</ul>
+        </aside>
+        <article class="dd-article">
+          <div class="page-head">
+            <span class="eyebrow">📚 Deep Dive</span>
+            <h1>${g.icon} ${esc(g.title)}</h1>
+            <p>${mdInline(g.tagline)}</p>
+          </div>
+          ${g.sections.map((s) => `<section class="dd-section" id="dd-${s.id}">
+            <h2 class="dd-h">${esc(s.h)}</h2>
+            ${s.blocks.map(ddBlock).join("")}
+          </section>`).join("")}
+          <div class="hero-cta" style="margin-top:10px">
+            <button class="btn btn-primary" data-go="mock">🎤 Test yourself in a mock</button>
+            <button class="btn btn-ghost" data-go="tools">🧰 Tools quick-reference</button>
+          </div>
+        </article>
+      </div>`;
+
+    // smooth-scroll TOC links
+    content.querySelectorAll("#ddToc a[data-dd]").forEach((a) =>
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        const t = content.querySelector(`#dd-${a.dataset.dd}`);
+        if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+      }));
+
+    // active-section highlighting
+    const links = new Map([...content.querySelectorAll("#ddToc a[data-dd]")].map((a) => [a.dataset.dd, a]));
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (en.isIntersecting) {
+          links.forEach((a) => a.classList.remove("active"));
+          const a = links.get(en.target.id.replace("dd-", ""));
+          if (a) a.classList.add("active");
+        }
+      });
+    }, { rootMargin: "-70px 0px -70% 0px" });
+    content.querySelectorAll(".dd-section").forEach((s) => io.observe(s));
+    viewTeardown = () => io.disconnect();
   }
 
   /* ============================ INTERACTIONS ============================ */
