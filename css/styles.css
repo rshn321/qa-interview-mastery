@@ -142,13 +142,13 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 .menu-toggle { display: none; }
 .search-wrap { flex: 1; position: relative; max-width: 560px; }
 .search-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: .6; font-size: .9rem; }
-#globalSearch {
+.search-wrap input {
   width: 100%; padding: 11px 14px 11px 40px;
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 10px; color: var(--text); font: inherit; font-size: .9rem;
   transition: all .15s var(--ease);
 }
-#globalSearch:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+.search-wrap input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
 
 .content { padding: 32px 28px 80px; max-width: 1080px; width: 100%; margin: 0 auto; animation: fade .4s var(--ease); }
 @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
