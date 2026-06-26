@@ -389,10 +389,7 @@
   }
 
   function startMock(len, perQ) {
-    // always include any "always-right" questions; fill the rest randomly
-    const special = quiz.filter((q) => q.any);
-    const rest = shuffle(quiz.filter((q) => !q.any));
-    const pool = shuffle([...special, ...rest.slice(0, Math.max(0, len - special.length))]);
+    const pool = shuffle([...quiz]).slice(0, len);
     mockState = { pool, i: 0, answers: Array.from({ length: pool.length }, () => null), perQ, timeLeft: perQ };
     renderQuestion();
   }
@@ -446,10 +443,10 @@
     $$("#answers .answer").forEach((b) => {
       const bi = +b.dataset.idx;
       b.disabled = true;
-      if (q.any || bi === q.c) b.classList.add("correct");
+      if (bi === q.c) b.classList.add("correct");
       else if (bi === idx) b.classList.add("wrong");
     });
-    const ok = q.any || idx === q.c;
+    const ok = idx === q.c;
     $("#explainSlot").innerHTML = `<div class="explain">
       <strong>${ok ? "✓ Correct." : idx === -1 ? "⌛ Time's up." : "✗ Not quite."}</strong>
       ${mdInline(q.e)}</div>`;
@@ -469,7 +466,7 @@
     let correct = 0;
     const byTopic = {};
     m.pool.forEach((q, i) => {
-      const ok = q.any || m.answers[i] === q.c;
+      const ok = m.answers[i] === q.c;
       if (ok) correct++;
       byTopic[q.topic] = byTopic[q.topic] || { ok: 0, n: 0 };
       byTopic[q.topic].n++; if (ok) byTopic[q.topic].ok++;
