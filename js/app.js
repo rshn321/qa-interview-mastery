@@ -108,7 +108,7 @@
     window.scrollTo(0, 0);
   }
 
-  const views = { dashboard, learn, flashcards, mock, roadmap, guide, docs, glossary };
+  const views = { dashboard, learn, flashcards, mock, roadmap, guide, docs, glossary, types };
 
   /* ---------- DASHBOARD ---------- */
   function dashboard() {
@@ -840,6 +840,74 @@
       b.classList.add("sel"); activeCat = b.dataset.cat; draw();
     });
     $("#glSearch").addEventListener("input", (e) => { term = e.target.value.trim(); draw(); });
+    draw();
+  }
+
+  /* ---------- TESTING TYPES (the full catalog) ---------- */
+  const typesData = window.QA_TYPES || { categories: [], types: [] };
+
+  function types() {
+    const cats = typesData.categories;
+    content.innerHTML = `
+      <div class="page-head">
+        <span class="eyebrow">🧪 Catalog</span>
+        <h1>Every Kind of Testing</h1>
+        <p>A complete, categorized map of testing types — ${typesData.types.length} kinds across ${cats.length} families, from black-box and the test levels to performance, security, and modern techniques like chaos and mutation testing. Filter or search to find any one.</p>
+      </div>
+      <div class="gl-toolbar">
+        <div class="search-wrap" style="max-width:none">
+          <span class="search-ico">🔎</span>
+          <input id="tySearch" type="search" placeholder="Search testing types… (e.g. smoke, soak, mutation, IDOR)" autocomplete="off" />
+        </div>
+      </div>
+      <div class="gl-chips" id="tyChips">
+        <button class="opt-chip sel" data-cat="all">All (${typesData.types.length})</button>
+        ${cats.map((c) => `<button class="opt-chip" data-cat="${c.id}">${c.icon} ${c.name} (${typesData.types.filter((t) => t.cat === c.id).length})</button>`).join("")}
+      </div>
+      <div id="tyList"></div>`;
+
+    let activeCat = "all", term = "";
+
+    function draw() {
+      const list = $("#tyList");
+      const q = term.toLowerCase();
+      const matches = (x) => !q || (x.t + " " + x.d + " " + (x.eg || "")).toLowerCase().includes(q);
+      const shownCats = cats.filter((c) => activeCat === "all" || c.id === activeCat);
+
+      let total = 0;
+      const sections = shownCats.map((c) => {
+        const items = typesData.types.filter((x) => x.cat === c.id && matches(x));
+        total += items.length;
+        if (!items.length) return "";
+        return `<section class="ty-section">
+          <h2 class="ty-h">${c.icon} ${c.name} <span class="ty-count">${items.length}</span></h2>
+          <div class="gl-grid">
+            ${items.map((x) => `<div class="gl-card">
+              <div class="gl-term">${hlMark(x.t, term)}</div>
+              <div class="gl-def">${renderMarkdown(x.d)}${x.eg ? `<div class="ty-eg">💡 ${mdInline(x.eg)}</div>` : ""}</div>
+            </div>`).join("")}
+          </div>
+        </section>`;
+      }).join("");
+
+      list.innerHTML = total
+        ? `<p class="muted tiny" style="margin-bottom:14px">${total} testing type${total === 1 ? "" : "s"}</p>${sections}`
+        : `<div class="sr-empty">No testing types match your search.</div>`;
+    }
+
+    function hlMark(text, t) {
+      if (!t) return mdInline(text);
+      const i = text.toLowerCase().indexOf(t.toLowerCase());
+      if (i < 0) return mdInline(text);
+      return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + t.length)) + "</mark>" + esc(text.slice(i + t.length));
+    }
+
+    $("#tyChips").addEventListener("click", (e) => {
+      const b = e.target.closest(".opt-chip"); if (!b) return;
+      $$("#tyChips .opt-chip").forEach((x) => x.classList.remove("sel"));
+      b.classList.add("sel"); activeCat = b.dataset.cat; draw();
+    });
+    $("#tySearch").addEventListener("input", (e) => { term = e.target.value.trim(); draw(); });
     draw();
   }
 

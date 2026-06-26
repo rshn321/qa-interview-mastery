@@ -432,6 +432,12 @@ pre.codeblock {
 .gl-def code:not(pre code) { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; color: var(--accent); font-size: .85em; }
 .gl-cat { margin-top: 10px; font-size: .7rem; color: var(--text-faint); font-weight: 500; }
 
+/* ░░ TESTING TYPES CATALOG ░░ */
+.ty-section { margin-bottom: 30px; animation: fade .3s var(--ease); }
+.ty-h { font-size: 1.05rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.ty-count { font-size: .72rem; font-weight: 600; color: var(--accent); background: var(--glow); padding: 2px 9px; border-radius: 99px; }
+.ty-eg { margin-top: 8px; font-size: .78rem; color: var(--text-faint); border-top: 1px dashed var(--border); padding-top: 8px; }
+
 /* ░░ SEARCH OVERLAY ░░ */
 .search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); backdrop-filter: blur(4px); z-index: 100; display: flex; justify-content: center; padding-top: 90px; animation: fade .15s; }
 .search-panel { width: 100%; max-width: 640px; max-height: 70vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 8px; }
