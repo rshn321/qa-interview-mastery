@@ -11,9 +11,16 @@
     "lint:fix": "oxlint --fix",
     "check": "oxlint --max-warnings 0"
   },
-  "keywords": ["qa", "testing", "interview", "oxc", "oxlint"],
+  "keywords": [
+    "qa",
+    "testing",
+    "interview",
+    "oxc",
+    "oxlint"
+  ],
   "license": "MIT",
   "devDependencies": {
+    "jsdom": "^29.1.1",
     "oxlint": "^1.71.0"
   }
 }

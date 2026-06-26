@@ -458,6 +458,11 @@ pre.codeblock {
 .gl-def p { margin: 0; }
 .gl-def code:not(pre code) { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; color: var(--accent); font-size: .85em; }
 .gl-cat { margin-top: 10px; font-size: .7rem; color: var(--text-faint); font-weight: 500; }
+@media (max-width: 600px) {
+  .gl-chips { gap: 6px; }
+  .gl-chips .opt-chip { padding: 8px 12px; font-size: .78rem; }
+  .gl-grid { grid-template-columns: 1fr; }
+}
 
 /* ░░ TESTING TYPES CATALOG ░░ */
 .ty-section { margin-bottom: 30px; animation: fade .3s var(--ease); }

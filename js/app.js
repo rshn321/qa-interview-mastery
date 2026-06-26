@@ -104,7 +104,6 @@
     const fn = views[view] || views.dashboard;
     content.innerHTML = "";
     fn(opts);
-    content.scrollIntoView({ block: "start" });
     window.scrollTo(0, 0);
   }
 
@@ -844,7 +843,7 @@
       $$("#glChips .opt-chip").forEach((x) => x.classList.remove("sel"));
       b.classList.add("sel"); activeCat = b.dataset.cat; draw();
     });
-    $("#glSearch").addEventListener("input", (e) => { term = e.target.value.trim(); draw(); });
+    $("#glSearch").addEventListener("input", debounce(() => { term = $("#glSearch").value.trim(); draw(); }));
     draw();
   }
 
@@ -958,7 +957,7 @@
       $$("#tyChips .opt-chip").forEach((x) => x.classList.remove("sel"));
       b.classList.add("sel"); activeCat = b.dataset.cat; draw();
     });
-    $("#tySearch").addEventListener("input", (e) => { term = e.target.value.trim(); draw(); });
+    $("#tySearch").addEventListener("input", debounce(() => { term = $("#tySearch").value.trim(); draw(); }));
 
     $("#tyList").addEventListener("click", (e) => {
       const card = e.target.closest(".ty-card[data-ty]");
@@ -1098,7 +1097,7 @@
       $$("#tlChips .opt-chip").forEach((x) => x.classList.remove("sel"));
       b.classList.add("sel"); activeCat = b.dataset.cat; draw();
     });
-    $("#tlSearch").addEventListener("input", (e) => { term = e.target.value.trim(); draw(); });
+    $("#tlSearch").addEventListener("input", debounce(() => { term = $("#tlSearch").value.trim(); draw(); }));
 
     $("#tlList").addEventListener("click", (e) => {
       const card = e.target.closest(".ty-card[data-tl]");
@@ -1248,7 +1247,7 @@
   tracks.forEach((t) => t.cards.forEach((c, i) =>
     searchIndex.push({ trackId: t.id, idx: i, q: c.q, a: c.a, track: t.name, icon: t.icon, level: c.level })));
 
-  searchInput.addEventListener("input", () => {
+  searchInput.addEventListener("input", debounce(() => {
     const term = searchInput.value.trim().toLowerCase();
     if (!term) { overlay.classList.add("hidden"); return; }
     const hits = searchIndex.filter((x) =>
@@ -1260,7 +1259,7 @@
         </div>`).join("")
       : `<div class="sr-empty">No matches for “${esc(term)}”.</div>`;
     overlay.classList.remove("hidden");
-  });
+  }));
 
   function highlight(text, term) {
     const i = text.toLowerCase().indexOf(term);
@@ -1286,6 +1285,7 @@
 
   /* ---------- utils ---------- */
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function debounce(fn, ms = 110) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
   /* ---------- boot ---------- */
   applyTheme();
