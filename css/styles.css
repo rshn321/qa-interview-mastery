@@ -213,6 +213,21 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 .section-title { font-size: 1.05rem; font-weight: 700; margin: 4px 0 16px; display: flex; align-items: center; gap: 8px; }
 .dash-cols { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; }
 
+/* dashboard hub launcher */
+.hub-group { margin-bottom: 18px; }
+.hub-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); margin: 0 0 10px 2px; }
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.hub-card {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  padding: 16px 16px 14px; cursor: pointer; text-align: left; font: inherit;
+  transition: all .15s var(--ease);
+}
+.hub-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: var(--shadow-md); }
+.hub-ico { font-size: 1.5rem; line-height: 1; margin-bottom: 5px; }
+.hub-name { font-weight: 700; font-size: .92rem; color: var(--text); }
+.hub-sub { font-size: .74rem; color: var(--text-dim); }
+@media (max-width: 520px) { .hub-grid { grid-template-columns: repeat(2, 1fr); } }
+
 /* topic progress list */
 .topic-row { display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; }
 .topic-row:last-child { border-bottom: none; }

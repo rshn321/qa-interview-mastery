@@ -158,7 +158,50 @@
             ${tip("When unsure, reason out loud about <strong>risk</strong> — it’s the senior mindset interviewers test for.")}
           </div>
         </div>
-      </div>`;
+      </div>
+
+      <div class="section-title" style="margin-top:30px">🧭 Explore everything</div>
+      ${hubGroups().map((g) => `
+        <div class="hub-group">
+          <div class="hub-label">${g.group}</div>
+          <div class="hub-grid">
+            ${g.items.map((it) => `<button class="card hub-card" data-go="${it.view}">
+              <span class="hub-ico">${it.icon}</span>
+              <span class="hub-name">${it.title}</span>
+              <span class="hub-sub">${it.sub}</span>
+            </button>`).join("")}
+          </div>
+        </div>`).join("")}`;
+  }
+
+  function hubGroups() {
+    const n = (x) => (x && x.length) || 0;
+    return [
+      { group: "Learn & Reference", items: [
+        { view: "docs", icon: "🔬", title: "QA Process", sub: `${n(docsData)} animated chapters` },
+        { view: "learn", icon: "📚", title: "Domains", sub: `${tracks.length} domains · ${totalCards} Q&A` },
+        { view: "types", icon: "🧪", title: "Testing Types", sub: `${n(typesData.types)} kinds` },
+        { view: "tools", icon: "🧰", title: "Tools & Tech", sub: `${n(toolsData.tools)} tools` },
+        { view: "glossary", icon: "📒", title: "Glossary", sub: `${n(glossaryData.terms)} terms` },
+        { view: "guide", icon: "📖", title: "Read the Guide", sub: "Full handbook" },
+      ]},
+      { group: "Deep Dives", items: [
+        { view: "ddSql", icon: "🗄️", title: "SQL for QA", sub: "Deep dive" },
+        { view: "ddAuto", icon: "🤖", title: "Automation", sub: "Frameworks" },
+        { view: "ddPlay", icon: "🎭", title: "Playwright", sub: "Full guide" },
+        { view: "ddSele", icon: "🧫", title: "Selenium", sub: "Full guide" },
+        { view: "ddCy", icon: "🌲", title: "Cypress", sub: "Full guide" },
+        { view: "ddPerf", icon: "⚡", title: "Performance", sub: "Load testing" },
+        { view: "ddCicd", icon: "🚦", title: "CI/CD", sub: "DevOps" },
+        { view: "ddJenkins", icon: "🧑‍🏭", title: "Jenkins", sub: "Full guide" },
+        { view: "ddK8s", icon: "☸️", title: "Kubernetes", sub: "Full guide" },
+      ]},
+      { group: "Practice", items: [
+        { view: "flashcards", icon: "🃏", title: "Flashcards", sub: "Active recall" },
+        { view: "mock", icon: "🎤", title: "Mock Interview", sub: `Best ${state.bestScore || 0}%` },
+        { view: "roadmap", icon: "🗺️", title: "Roadmap", sub: "6-week plan" },
+      ]},
+    ];
   }
 
   const stat = (ico, num, lbl, bar, pct) => `
