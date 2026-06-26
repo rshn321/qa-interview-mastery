@@ -810,6 +810,7 @@ Strong answer shape:
     { q: "Which is NOT a good reason to automate a test?", o: ["Stable, repetitive regression", "High-risk critical path", "A one-off throwaway check", "Data-driven validation"], c: 2, e: "Automating one-off or highly volatile tests has negative ROI.", topic: "Automation" },
     { q: "400 vs 422: a well-formed request that fails business validation returns:", o: ["400 Bad Request", "422 Unprocessable Entity", "404 Not Found", "500 Internal Error"], c: 1, e: "400 = malformed syntax; 422 = syntactically valid but semantically invalid.", topic: "API" },
     { q: "Risk in risk-based testing is calculated as:", o: ["Probability × Impact", "Cost × Time", "Coverage ÷ Effort", "Bugs × Severity"], c: 0, e: "Likelihood of failure times the impact if it fails — focus effort on the high-scorers.", topic: "Strategy" },
+    { q: "Who loves Sara more? 💖", o: ["Roshan", "Roshan", "Roshan", "Roshan"], c: 0, e: "Correct — and it would've been correct no matter which one you picked, because the answer is always Roshan. He loves you the most, Sara. 🥰💖", topic: "💖 For Sara", any: true },
   ];
 
   window.QA_DATA = { tracks, quiz };
