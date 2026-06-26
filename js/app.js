@@ -108,7 +108,7 @@
     window.scrollTo(0, 0);
   }
 
-  const views = { dashboard, learn, flashcards, mock, roadmap, guide, docs, glossary, types };
+  const views = { dashboard, learn, flashcards, mock, roadmap, guide, docs, glossary, types, tools };
 
   /* ---------- DASHBOARD ---------- */
   function dashboard() {
@@ -968,6 +968,146 @@
       if (e.target === modal || e.target.closest(".ty-close")) { closeModal(); return; }
       const rel = e.target.closest(".ty-rel[data-ty]");
       if (rel) openModal(+rel.dataset.ty);
+    });
+
+    const onKey = (e) => { if (e.key === "Escape" && !modal.classList.contains("hidden")) closeModal(); };
+    document.addEventListener("keydown", onKey);
+    viewTeardown = () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+
+    draw();
+  }
+
+  /* ---------- TOOLS & TECH (SQL, automation, perf, CI/CD) ---------- */
+  const toolsData = window.QA_TOOLS || { categories: [], tools: [] };
+  const toolByName = new Map(toolsData.tools.map((x, i) => [x.t, i]));
+  const toolCat = (id) => toolsData.categories.find((c) => c.id === id) || { icon: "", name: "" };
+
+  function tools() {
+    const cats = toolsData.categories;
+    content.innerHTML = `
+      <div class="page-head">
+        <span class="eyebrow">🧰 Reference</span>
+        <h1>Tools &amp; Tech</h1>
+        <p>Deep, practical knowledge of the tools every QA is expected to know — SQL, automation frameworks (Selenium, Playwright, Cypress), load tools (JMeter, LoadRunner, k6) and CI/CD (Jenkins, Kubernetes, Docker). <strong>Click any card</strong> for features, pros &amp; cons, when to use it, and a code example.</p>
+      </div>
+      <div class="gl-toolbar">
+        <div class="search-wrap" style="max-width:none">
+          <span class="search-ico">🔎</span>
+          <input id="tlSearch" type="search" placeholder="Search tools… (e.g. JOIN, Playwright, JMeter, Jenkins, k8s)" autocomplete="off" />
+        </div>
+      </div>
+      <div class="gl-chips" id="tlChips">
+        <button class="opt-chip sel" data-cat="all">All (${toolsData.tools.length})</button>
+        ${cats.map((c) => `<button class="opt-chip" data-cat="${c.id}">${c.icon} ${c.name} (${toolsData.tools.filter((t) => t.cat === c.id).length})</button>`).join("")}
+      </div>
+      <div id="tlList"></div>
+      <div class="ty-modal-overlay hidden" id="tlModal"></div>`;
+
+    let activeCat = "all", term = "";
+    const modal = $("#tlModal");
+
+    function draw() {
+      const list = $("#tlList");
+      const q = term.toLowerCase();
+      const matches = (x) => !q || (x.t + " " + x.d + " " + (x.what || "") + " " + (x.code || "")).toLowerCase().includes(q);
+      const shownCats = cats.filter((c) => activeCat === "all" || c.id === activeCat);
+
+      let total = 0;
+      const sections = shownCats.map((c) => {
+        const items = toolsData.tools.filter((x) => x.cat === c.id && matches(x));
+        total += items.length;
+        if (!items.length) return "";
+        return `<section class="ty-section">
+          <h2 class="ty-h">${c.icon} ${c.name} <span class="ty-count">${items.length}</span></h2>
+          <div class="gl-grid">
+            ${items.map((x) => `<div class="gl-card ty-card" data-tl="${toolByName.get(x.t)}" role="button" tabindex="0">
+              <div class="gl-term">${hlMark(x.t, term)}</div>
+              <div class="gl-def">${renderMarkdown(x.d)}</div>
+              <span class="ty-more">View detail →</span>
+            </div>`).join("")}
+          </div>
+        </section>`;
+      }).join("");
+
+      list.innerHTML = total
+        ? `<p class="muted tiny" style="margin-bottom:14px">${total} item${total === 1 ? "" : "s"} · click for detail</p>${sections}`
+        : `<div class="sr-empty">No tools match your search.</div>`;
+    }
+
+    function hlMark(text, t) {
+      if (!t) return mdInline(text);
+      const i = text.toLowerCase().indexOf(t.toLowerCase());
+      if (i < 0) return mdInline(text);
+      return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + t.length)) + "</mark>" + esc(text.slice(i + t.length));
+    }
+
+    function bulletList(label, ico, arr) {
+      if (!arr || !arr.length) return "";
+      return `<div class="ty-block"><h4>${ico} ${label}</h4>
+        <ul class="ty-ul">${arr.map((i) => `<li>${mdInline(i)}</li>`).join("")}</ul></div>`;
+    }
+
+    function openModal(i) {
+      const x = toolsData.tools[i];
+      if (!x) return;
+      const c = toolCat(x.cat);
+      const prosCons = (x.pros || x.cons)
+        ? `<div class="ty-proscons">
+            ${x.pros ? `<div class="pc-col pc-pro"><h4>✅ Strengths</h4><ul>${x.pros.map((p) => `<li>${mdInline(p)}</li>`).join("")}</ul></div>` : ""}
+            ${x.cons ? `<div class="pc-col pc-con"><h4>⚠️ Limitations</h4><ul>${x.cons.map((p) => `<li>${mdInline(p)}</li>`).join("")}</ul></div>` : ""}
+          </div>` : "";
+      modal.innerHTML = `
+        <div class="ty-modal" role="dialog" aria-modal="true" aria-label="${esc(x.t)}">
+          <button class="ty-close" aria-label="Close">✕</button>
+          <span class="pill accent">${c.icon} ${c.name}</span>
+          <h2 class="ty-modal-title">${mdInline(x.t)}</h2>
+          <p class="ty-modal-lead">${mdInline(x.d)}</p>
+          ${x.what ? `<div class="ty-block"><h4>Overview</h4>${renderMarkdown(x.what)}</div>` : ""}
+          ${bulletList("Key features", "✨", x.features)}
+          ${prosCons}
+          ${x.when ? `<div class="ty-block"><h4>🎯 When to use</h4>${renderMarkdown(x.when)}</div>` : ""}
+          ${x.code ? `<div class="ty-block"><h4>💻 Example</h4>${codeBlock(x.code)}</div>` : ""}
+          ${x.tip ? `<div class="ty-meta-card" style="margin-bottom:18px"><h4>💡 Tip</h4>${renderMarkdown(x.tip)}</div>` : ""}
+          ${(x.related && x.related.length) ? `<div class="ty-block"><h4>Related</h4>
+            <div class="ty-related">${x.related.map((r) => {
+              const ri = toolByName.get(r);
+              return ri !== undefined
+                ? `<button class="ty-rel" data-tl="${ri}">${esc(r)} →</button>`
+                : `<span class="ty-rel ty-rel-dead">${esc(r)}</span>`;
+            }).join("")}</div></div>` : ""}
+        </div>`;
+      modal.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      const m = modal.querySelector(".ty-modal");
+      if (m) m.scrollTop = 0;
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+      modal.innerHTML = "";
+      document.body.style.overflow = "";
+    }
+
+    $("#tlChips").addEventListener("click", (e) => {
+      const b = e.target.closest(".opt-chip"); if (!b) return;
+      $$("#tlChips .opt-chip").forEach((x) => x.classList.remove("sel"));
+      b.classList.add("sel"); activeCat = b.dataset.cat; draw();
+    });
+    $("#tlSearch").addEventListener("input", (e) => { term = e.target.value.trim(); draw(); });
+
+    $("#tlList").addEventListener("click", (e) => {
+      const card = e.target.closest(".ty-card[data-tl]");
+      if (card) openModal(+card.dataset.tl);
+    });
+    $("#tlList").addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const card = e.target.closest(".ty-card[data-tl]");
+      if (card) { e.preventDefault(); openModal(+card.dataset.tl); }
+    });
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal || e.target.closest(".ty-close")) { closeModal(); return; }
+      const rel = e.target.closest(".ty-rel[data-tl]");
+      if (rel) openModal(+rel.dataset.tl);
     });
 
     const onKey = (e) => { if (e.key === "Escape" && !modal.classList.contains("hidden")) closeModal(); };
