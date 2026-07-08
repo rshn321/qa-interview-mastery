@@ -102,6 +102,8 @@
     $$(".nav-item").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
     $("#sidebar").classList.remove("open");
     const fn = views[view] || views.dashboard;
+    // Deep-dive views (animated docs + guides) breathe wider on large screens.
+    content.classList.toggle("content-wide", view === "docs" || view.startsWith("dd"));
     content.innerHTML = "";
     fn(opts);
     window.scrollTo(0, 0);

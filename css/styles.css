@@ -153,6 +153,23 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 .content { padding: 32px 28px 80px; max-width: 1080px; width: 100%; margin: 0 auto; animation: fade .4s var(--ease); }
 @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
+/* ── Deep-dive views (animated docs + guides) fill wide screens ── */
+@media (min-width: 1160px) {
+  .content.content-wide { max-width: 1280px; padding-left: 40px; padding-right: 40px; }
+  .content-wide .dd-layout { grid-template-columns: 232px minmax(0, 1fr); gap: 48px; }
+  /* keep prose readable even as the column grows; tables/code/visuals stay full-width */
+  .content-wide .dd-article > .dd-section > p,
+  .content-wide .dd-article > .dd-section > ul,
+  .content-wide .dd-article > .dd-section > ol,
+  .content-wide .ch-body > p,
+  .content-wide .ch-body > ul,
+  .content-wide .ch-body > ol { max-width: 76ch; }
+}
+@media (min-width: 1560px) {
+  .content.content-wide { max-width: 1440px; }
+  .content-wide .dd-layout { grid-template-columns: 252px minmax(0, 1fr); gap: 60px; }
+}
+
 /* ░░ headings & shared ░░ */
 .page-head { margin-bottom: 26px; }
 .page-head h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -.02em; }
