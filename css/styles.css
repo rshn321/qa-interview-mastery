@@ -155,19 +155,19 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 
 /* ── Deep-dive views (animated docs + guides) fill wide screens ── */
 @media (min-width: 1160px) {
-  .content.content-wide { max-width: 1280px; padding-left: 40px; padding-right: 40px; }
-  .content-wide .dd-layout { grid-template-columns: 232px minmax(0, 1fr); gap: 48px; }
+  /* fill the available area instead of centering in a narrow box */
+  .content.content-wide { max-width: none; padding-left: 40px; padding-right: 44px; }
+  .content-wide .dd-layout { grid-template-columns: 240px minmax(0, 1fr); gap: 52px; }
   /* keep prose readable even as the column grows; tables/code/visuals stay full-width */
   .content-wide .dd-article > .dd-section > p,
   .content-wide .dd-article > .dd-section > ul,
   .content-wide .dd-article > .dd-section > ol,
   .content-wide .ch-body > p,
   .content-wide .ch-body > ul,
-  .content-wide .ch-body > ol { max-width: 76ch; }
+  .content-wide .ch-body > ol { max-width: 82ch; }
 }
 @media (min-width: 1560px) {
-  .content.content-wide { max-width: 1440px; }
-  .content-wide .dd-layout { grid-template-columns: 252px minmax(0, 1fr); gap: 60px; }
+  .content-wide .dd-layout { grid-template-columns: 260px minmax(0, 1fr); gap: 64px; }
 }
 
 /* ░░ headings & shared ░░ */
